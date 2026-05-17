@@ -1,0 +1,221 @@
+<!--
+    COLLECTIONVIEW.AXAML — Page principale (ACCUEIL) : liste des voitures de l'utilisateur
+    DataContext = CollectionViewModel
+    
+    NOTE SUR LES COMMANDES DANS UNE DATATEMPLATE :
+      À l'intérieur d'un DataTemplate, le DataContext est l'objet de la liste (Voiture)
+      Pour accéder aux commandes du ViewModel parent, on utilise :
+        Command="{Binding DataContext.MaCommand, ElementName=Collection}"
+      où Collection = x:Name de la UserControl (voir x:Name="Collection" ci-dessous)
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyProjectBase.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MyProjectBase.Views.CollectionView"
+             x:DataType="vm:CollectionViewModel"
+             x:Name="Collection"> <!-- x:Name utilisé dans les bindings des DataTemplate -->
+
+    <Design.DataContext>
+        <vm:CollectionViewModel/> <!-- Données de design pour le preview XAML -->
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- IMAGE DE FOND  -->
+        <Grid.Background>
+            <ImageBrush Source="avares://MyProjectBase/Assets/background_logo.png"
+                        Stretch="UniformToFill"
+                        Opacity="0.10"/> <!-- Très transparent pour ne pas gêner la lisibilité -->
+        </Grid.Background>
+
+        <!--BARRE DU HAUT + boutons | titre  | filtres + déconnecter -->
+        
+        <Border Grid.Row="0" Background="#121212" Padding="15"
+                BorderBrush="#2A2A2A" BorderThickness="0,0,0,1"> <!-- Bordure en bas uniquement -->
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <!-- actions sur la collection -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+
+                    <!-- Import CSV : ouvre un explorateur fichier, charge les voitures depuis un CSV 
+                        Lié à LoadFromCsvCommand dans CollectionViewModel -->
+                    <Button Content="Import CSV"
+                            Command="{Binding LoadFromCsvCommand}"
+                            Background="#2A2A2A" Foreground="White"
+                            CornerRadius="15" Padding="12,6"/>
+
+                    <!-- Export CSV : bouton avec FLYOUT (menu déroulant)
+                        Le flyout contient les CheckBox de sélection des colonnes
+                        + le bouton "Exporter" qui déclenche ExporterCsvCommand -->
+                    <Button Background="#2A2A2A" Foreground="White"
+                            CornerRadius="15" Padding="12,6">
+                        <Button.Content>Export CSV</Button.Content>
+                        <Button.Flyout>
+                            <!-- Flyout = popup attaché au bouton, s'ouvre au clic -->
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                <Border Background="#1A1A1A" BorderBrush="#3A3A3A"
+                                        BorderThickness="1" CornerRadius="12"
+                                        Padding="16" MinWidth="220">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="Colonnes à exporter"
+                                                   Foreground="White" FontWeight="Bold"/>
+                                        <Rectangle Height="1" Fill="#2A2A2A"/>
+
+                                        <!-- Liste des colonnes cochables
+                                            ItemsSource = ColonnesExport (ObservableCollection<ColonneExport>)
+                                            Chaque ColonneExport a Label (texte) + EstSelectionnee (booléen)
+                                        -->
+                                        <ItemsControl ItemsSource="{Binding ColonnesExport}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <!-- IsChecked lié à EstSelectionnee (two-way par défaut) -->
+                                                    <CheckBox Content="{Binding Label}"
+                                                              IsChecked="{Binding EstSelectionnee}"
+                                                              Foreground="#BBBBBB"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Rectangle Height="1" Fill="#2A2A2A"/>
+
+                                        <!-- Bouton Exporter dans le flyout
+                                            ElementName=Collection → remonte au DataContext de la UserControl
+                                            (nécessaire car on est dans le Flyout, pas dans le DataTemplate) -->
+                                        <Button Content="Exporter"
+                                                Command="{Binding DataContext.ExporterCsvCommand, ElementName=Collection}"
+                                                Background="#D4AF37" Foreground="Black"
+                                                FontWeight="Bold" CornerRadius="8"/>
+                                    </StackPanel>
+                                </Border>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+
+                    <!-- Ouvre AjouterVoitureView -->
+                    <Button Content="+ Ajouter voiture"
+                            Command="{Binding OuvrirAjoutVoitureCommand}"
+                            Background="#D4AF37" Foreground="Black"
+                            FontWeight="Bold" CornerRadius="15" Padding="12,6"/>
+
+                    <!-- Bouton Admin : visible SEULEMENT si IsAdmin = true
+                        IsAdmin est une propriété calculée : _role == "admin"
+                        Lié à IsVisible → masqué pour les utilisateurs normaux -->
+                    <Button Content="🛡 Admin"
+                            Command="{Binding AllerAdminCommand}"
+                            Background="#2A2A2A" Foreground="#D4AF37"
+                            CornerRadius="15" Padding="12,6"
+                            IsVisible="{Binding IsAdmin}"/>
+
+                </StackPanel>
+
+                <!-- filtres + déconnexion -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="15">
+
+                    <!--
+                        Filtre par marque (ComboBox)
+                        ItemsSource = liste Marques (List<string> dans le ViewModel)
+                        SelectedItem = MarqueSelectionnee → déclenche OnMarqueSelectionneeChanged → AppliquerFiltres()
+                    -->
+                    <ComboBox Width="160"
+                              ItemsSource="{Binding Marques}"
+                              SelectedItem="{Binding MarqueSelectionnee}"
+                              PlaceholderText="Marques"/> <!-- "Marques" affiché si rien sélectionné -->
+
+                    <!-- Filtre par type de carburant -->
+                    <ComboBox Width="160"
+                              ItemsSource="{Binding Carburants}"
+                              SelectedItem="{Binding CarburantSelectionne}"
+                              PlaceholderText="Carburants"/>
+
+                    <!-- Déconnexion : remet _currentUser = null + retourne au LoginView -->
+                    <Button Content="Déconnecter"
+                            Command="{Binding LogoutCommand}"
+                            Background="#1E1E1E"
+                            Foreground="#FF6B6B" BorderBrush="#FF6B6B"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="12,6"
+                            Margin="10,0,0,0"/><!-- Rouge pour signifier l'action de sortie -->
+
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+        <!--TITRE -->
+        <TextBlock Grid.Row="1" Text="Ma collection de voitures"
+                   HorizontalAlignment="Center"
+                   Margin="0,15,0,10" Foreground="White" FontSize="24"/>
+
+        <!-- LISTE DES VOITURES
+             ItemsSource = MesVoituresObservable (liste filtrée)
+             Chaque item = une carte voiture avec image + infos + boutons -->
+        <ScrollViewer Grid.Row="2">
+            <ListBox x:Name="Voitures"
+                     ItemsSource="{Binding MesVoituresObservable}" SelectedItem="{Binding VoitureSelectionnee}"
+                     Background="Transparent" BorderThickness="0"><!-- Liste filtrée (CollectionViewModel) -->
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate> <!-- DataContext ici = une Voiture -->
+                        <Border Background="#121212" CornerRadius="20"
+                                Padding="15" Margin="10"
+                                BorderBrush="#2A2A2A" BorderThickness="1">
+
+                            <!-- Image | Infos | Btn Voir | Btn Supprimer -->
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+
+                                <!-- IMAGE de la voiture (chargée via ImageHelper.LoadFromResource) -->
+                                <Border Width="180" Height="120"
+                                        CornerRadius="15" ClipToBounds="True">
+                                    <Image Source="{Binding Image}" Stretch="UniformToFill"/>
+                                </Border>
+
+                                <!-- INFOS  : nom, marque, description tronquée, carburant -->
+                                <StackPanel Grid.Column="1" Margin="20,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Nom}"
+                                               FontSize="20" FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="{Binding Marque}"
+                                               Foreground="#D4AF37" Margin="0,5,0,0"/> <!-- Or = marque -->
+                                    <TextBlock Text="{Binding Description}"
+                                               Foreground="#BBBBBB"
+                                               TextTrimming="CharacterEllipsis" MaxWidth="400" Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding TypeCarburant}"
+                                               Foreground="#777" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <!-- BOUTON VOIR : navigue vers CollectionDetailsView
+                                    CommandParameter = Id de la voiture (string)
+                                    DataContext.FromParentCommand : remonte au ViewModel parent
+                                    (car ici DataContext = Voiture, pas CollectionViewModel)
+                                    FromParentCommand = GoToDetailsFromChildCommand de MainWindowViewModel -->
+                                <Button Grid.Column="2" Content="Voir"
+                                        Background="#D4AF37" Foreground="Black"
+                                        Padding="12,6" CornerRadius="12"
+                                        VerticalAlignment="Center" Margin="0,0,8,0"
+                                        Command="{Binding DataContext.FromParentCommand, ElementName=Collection}"
+                                        CommandParameter="{Binding Id}"/> <!-- Passe l'Id MongoDB -->
+
+                                <!--
+                                    BOUTON SUPPRIMER : supprime de MongoDB + de la liste locale
+                                    CommandParameter={Binding} = passe l'objet Voiture entier
+                                -->
+                                <Button Grid.Column="3" Content="🗑"
+                                        Background="#C0392B" Foreground="White"
+                                        Padding="12,6" CornerRadius="12"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding DataContext.SupprimerVoitureCommand, ElementName=Collection}"
+                                        CommandParameter="{Binding}"/> 
+
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+
+            </ListBox>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

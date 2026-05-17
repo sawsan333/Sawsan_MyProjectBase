@@ -1,0 +1,235 @@
+﻿<!-- ADMINVIEW.AXAML — Page d'admin 
+    DataContext = AdminViewModel
+    
+      Chaque utilisateur est affiché dans un UserRowViewModel (IsEditing = false/true)
+      IsEditing=false → carte lecture seule avec boutons Modifier/Supprimer
+      IsEditing=true  → panneau édition avec TextBox + ComboBox + boutons Sauvegarder/Annuler
+
+      Les commandes (OuvrirEditionCommand, DemanderSuppressionCommand, etc.) sont dans AdminViewModel
+      Depuis le DataTemplate (DataContext = UserRowViewModel), on remonte via :
+        Command="{Binding DataContext.MaCommand, ElementName=AdminPage}"
+      où AdminPage = x:Name de la UserControl
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyProjectBase.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="500"
+             x:Class="MyProjectBase.Views.AdminView"
+             x:DataType="vm:AdminViewModel"
+             x:Name="AdminPage"> <!-- Utilisé dans les bindings des DataTemplate -->
+
+    <Design.DataContext>
+        <vm:AdminViewModel/> <!-- Constructeur vide pour le preview XAML -->
+    </Design.DataContext>
+
+    <Grid Background="#0D0D0D" RowDefinitions="Auto,Auto,*">
+
+        <!-- HEAD -->
+        <Border Grid.Row="0" Background="#121212" Padding="15"
+                BorderBrush="#2A2A2A" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+                <!-- RetourCommand → AdminViewModel.Retour() → callback _retour → AllerCollection() -->
+                <Button Content="← Retour"
+                        Command="{Binding RetourCommand}"
+                        Background="Transparent" Foreground="#D4AF37"
+                        FontSize="14" Padding="0"/>
+                <TextBlock Grid.Column="1"
+                           Text="🛡 Administration — Utilisateurs"
+                           Foreground="White" FontSize="20" FontWeight="Bold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- MESSAGE DE FEEDBACK
+             Affiché après une action (suppression, modification)
+             Invisible si Message est null/vide -->
+        <TextBlock Grid.Row="1" Text="{Binding Message}"
+                   Foreground="#D4AF37" FontSize="13"
+                   HorizontalAlignment="Center" Margin="0,8"
+                   IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        <!-- CONTENU PRINCIPAL:
+               - ScrollViewer (liste) : visible si !ConfirmationVisible
+               - Grid (dialog) : visible si ConfirmationVisible -->
+        <Grid Grid.Row="2">
+
+            <!-- LISTE DES UTILISATEURS -->
+            <ScrollViewer IsVisible="{Binding !ConfirmationVisible}"> <!-- ! = négation booléenne -->
+                <ItemsControl ItemsSource="{Binding Utilisateurs}" Margin="20,10">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:UserRowViewModel"> <!-- DataContext = UserRowViewModel -->
+
+                            <StackPanel Spacing="0">
+
+                                <!-- CARTE LECTURE -->
+                                <Border Background="#121212" CornerRadius="14" Padding="18"
+                                        Margin="0,0,0,2" BorderBrush="#2A2A2A" BorderThickness="1">
+                                    
+                                    <!-- Infos |  rôle | Btn Modifier | Btn Supprimer -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+
+                                        <!-- Infos : Nom d'utilisateur + email -->
+                                        <StackPanel Spacing="3" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding User.Username}"
+                                                       Foreground="White" FontSize="15" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding User.Email}"
+                                                       Foreground="#888" FontSize="12"/>
+                                        </StackPanel>
+
+                                        <!-- Rôle -->
+                                        <Border Grid.Column="1" CornerRadius="8" Padding="10,4"
+                                                Margin="10,0" VerticalAlignment="Center"
+                                                Background="#D4AF37">
+                                            <TextBlock Text="{Binding User.Role}"
+                                                       Foreground="Black" FontSize="12" FontWeight="Bold"/>
+                                        </Border>
+
+                                        <!-- Bouton Modifier → OuvrirEditionCommand(User)
+                                            Remonte au DataContext de AdminPage (AdminViewModel)
+                                            CommandParameter = User (objet User du UserRowViewModel) -->
+                                        <Button Grid.Column="2" Content="✏️ Modifier"
+                                                Command="{Binding DataContext.OuvrirEditionCommand, ElementName=AdminPage}"
+                                                CommandParameter="{Binding User}"
+                                                Background="#2A2A2A" Foreground="White"
+                                                CornerRadius="10" Padding="12,8"
+                                                VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                                        <!-- Bouton Supprimer → DemanderSuppressionCommand(User)
+                                            N'affiche PAS directement un dialog → passe par ConfirmationVisible
+                                            Le dialog apparaît par-dessus la liste (voir Grid ci-dessous) -->
+                                        <Button Grid.Column="3" Content="🗑 Supprimer"
+                                                Command="{Binding DataContext.DemanderSuppressionCommand, ElementName=AdminPage}"
+                                                CommandParameter="{Binding User}"
+                                                Background="#C0392B" Foreground="White"
+                                                CornerRadius="10" Padding="12,8"
+                                                VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- PANNEAU D'ÉDITION 
+                                     IsVisible={Binding IsEditing} -->
+                                <Border IsVisible="{Binding IsEditing}"
+                                        Background="#1A1A1A" BorderBrush="#D4AF37"
+                                        BorderThickness="1" CornerRadius="0,0,14,14" Padding="20" Margin="0,0,0,8">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+
+                                        <TextBlock Grid.Row="0"
+                                                   Text=" Modifier l'utilisateur"
+                                                   Foreground="#D4AF37" FontSize="14" FontWeight="Bold"
+                                                   Margin="0,0,0,12"/>
+
+                                        <!-- Nom d'utilisateur + Email -->
+                                        <Grid Grid.Row="1" ColumnDefinitions="*,20,*" Margin="0,0,0,10">
+                                            <StackPanel Grid.Column="0" Spacing="5">
+                                                <TextBlock Text="Nom d'utilisateur" Foreground="#BBBBBB" FontSize="12"/>
+                                                
+                                                <!-- EditUsername est dans AdminViewModel (pas UserRowViewModel)
+                                                    → obligé de remonter via ElementName=AdminPage -->
+                                                
+                                                <TextBox Text="{Binding DataContext.EditUsername, ElementName=AdminPage}"
+                                                         Background="#1E1E1E" Foreground="White"
+                                                         BorderBrush="#3A3A3A" CornerRadius="8" Padding="10,8"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Spacing="5">
+                                                <TextBlock Text="Email" Foreground="#BBBBBB" FontSize="12"/>
+                                                <TextBox Text="{Binding DataContext.EditEmail, ElementName=AdminPage}"
+                                                         Background="#1E1E1E" Foreground="White"
+                                                         BorderBrush="#3A3A3A" CornerRadius="8" Padding="10,8"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- ComboBox pour le rôle -->
+                                        <StackPanel Grid.Row="2" Spacing="5" Margin="0,0,0,14">
+                                            <TextBlock Text="Rôle" Foreground="#BBBBBB" FontSize="12"/>
+                                            
+                                            <!-- SelectedItem = EditRole (string "user"/"admin")
+                                                ItemsSource = Roles (List<string> {"user","admin"} dans AdminViewModel) -->
+                                            <ComboBox SelectedItem="{Binding DataContext.EditRole, ElementName=AdminPage}"
+                                                      ItemsSource="{Binding DataContext.Roles, ElementName=AdminPage}"
+                                                      HorizontalAlignment="Stretch"
+                                                      Background="#1E1E1E" Foreground="White"
+                                                      BorderBrush="#3A3A3A" CornerRadius="8" Padding="8,6"/>
+                                        </StackPanel>
+
+                                        <!-- Boutons Annuler / Sauvegarder -->
+                                        <Grid Grid.Row="3" ColumnDefinitions="*,*">
+                                            <Button Grid.Column="0" Content="Annuler"
+                                                    Command="{Binding DataContext.AnnulerEditionCommand, ElementName=AdminPage}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Center"
+                                                    Background="#2A2A2A" Foreground="White"
+                                                    CornerRadius="8" Padding="0,10" Margin="0,0,6,0"/>
+                                            <!-- Sauvegarder : met à jour MongoDB + recharge la liste -->
+                                            <Button Grid.Column="1" Content="💾 Sauvegarder"
+                                                    Command="{Binding DataContext.SauvegarderEditionCommand, ElementName=AdminPage}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Center"
+                                                    Background="#D4AF37" Foreground="Black"
+                                                    FontWeight="Bold" CornerRadius="8"
+                                                    Padding="0,10" Margin="6,0,0,0"/>
+                                        </Grid>
+
+                                    </Grid>
+                                </Border>
+
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- DIALOG DE CONFIRMATION DE SUPPRESSION
+                 IsVisible={Binding ConfirmationVisible} -->
+            <Grid IsVisible="{Binding ConfirmationVisible}"
+                  Background="#CC000000"> <!-- #CC = 80% opacité noir = overlay -->
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="400" Background="#1A1A1A"
+                        BorderBrush="#C0392B" BorderThickness="1" 
+                        CornerRadius="16" Padding="30">
+                    <StackPanel Spacing="20">
+
+                        <TextBlock Text="⚠️ Confirmer la suppression"
+                                   Foreground="#FF6B6B" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center"/>
+
+                        <!-- Message avec le nom de l'utilisateur à supprimer -->
+                        <TextBlock Foreground="#BBBBBB" FontSize="14"
+                                   TextAlignment="Center" TextWrapping="Wrap">
+                            <Run Text="Voulez-vous vraiment supprimer "/>
+                            <!--
+                                UserASupprimer.Username = nom de l'utilisateur ciblé
+                                (stocké dans AdminViewModel lors de DemanderSuppression)
+                            -->
+                            <Run Text="{Binding UserASupprimer.Username}"
+                                 FontWeight="Bold" Foreground="White"/>
+                            <Run Text="? Cette action est irréversible."/>
+                        </TextBlock>
+
+                        <Grid ColumnDefinitions="*,*">
+                            <!-- Annuler : ferme le dialog, remet ConfirmationVisible=false -->
+                            <Button Grid.Column="0" Content="Annuler"
+                                    Command="{Binding AnnulerSuppressionCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    Background="#2A2A2A" Foreground="White"
+                                    CornerRadius="10" Padding="0,14" Margin="0,0,8,0"/>
+                            <!-- Confirmer : supprime en MongoDB + recharge la liste -->
+                            <Button Grid.Column="1" Content="Oui, supprimer"
+                                    Command="{Binding ConfirmerSuppressionCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    Background="#C0392B" Foreground="White"
+                                    FontWeight="Bold" CornerRadius="10"
+                                    Padding="0,14" Margin="8,0,0,0"/>
+                        </Grid>
+
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</UserControl>

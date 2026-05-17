@@ -1,0 +1,36 @@
+<!--
+    MAINWINDOW.AXAML — Fenêtre principale (la seule fenêtre réelle de l'app)
+    
+    RÔLE : conteneur unique qui affiche la page courante via CurrentPage
+    La navigation entre pages se fait en changeant CurrentPage dans MainWindowViewModel
+    → ViewLocator reçoit le ViewModel → trouve la View correspondante → l'affiche ici
+    
+    PATTERN MVVM :
+      MainWindowViewModel.CurrentPage = LoginViewModel  → LoginView s'affiche
+      MainWindowViewModel.CurrentPage = CollectionViewModel → CollectionView s'affiche
+      etc. (voir ViewLocator.cs pour la logique de résolution)
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MyProjectBase.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="MyProjectBase.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        x:Name="Main"
+        Title="Ma Collection de voitures"><!-- Typage fort du DataContext pour l'IntelliSense et le binding compilé -->
+
+    <Grid Background="#0D0D0D"> <!-- Fond noir quasi-total, couleur de base du thème sombre -->
+
+        <!--
+            ContentControl = le "trou" dans lequel la page courante s'affiche
+            Content est lié à CurrentPage (ViewModelBase)
+            Quand CurrentPage change → ViewLocator.Build() est appelé → retourne la View → affichée ici
+            C'est le mécanisme central de navigation de toute l'application
+        -->
+        <ContentControl Content="{Binding CurrentPage}" />
+
+    </Grid>
+    
+</Window>

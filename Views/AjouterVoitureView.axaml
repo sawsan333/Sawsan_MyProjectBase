@@ -1,0 +1,162 @@
+﻿<!-- AJOUTERVOITUREVIEW.AXAML — Page d'ajout d'une voiture à la collection
+    DataContext = AjouterVoitureViewModel
+    
+    FONCTIONNEMENT :
+      1. Au chargement : AjouterVoitureViewModel charge le catalogue global depuis MongoDB
+      2. L'utilisateur sélectionne une voiture dans la ListBox
+      3. Clic "Ajouter" → copie la voiture dans la collection privée → retour collection
+      4. Clic "Annuler" → retour collection sans modification -->
+
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyProjectBase.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="MyProjectBase.Views.AjouterVoitureView"
+             x:DataType="vm:AjouterVoitureViewModel">
+
+    <Grid Background="#0D0D0D" RowDefinitions="Auto,*">
+
+        <!-- HEAD -->
+        <Border Grid.Row="0" Background="#121212" Padding="15"
+                BorderBrush="#2A2A2A" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+
+                <!-- Bouton retour = même que Annuler (revient à la collection sans ajouter) -->
+                <Button Content="← Retour"
+                        Command="{Binding AnnulerCommand}"
+                        Background="Transparent"
+                        Foreground="#D4AF37"
+                        FontSize="14"/>
+
+                <TextBlock Grid.Column="1"
+                           Text="Choisir une voiture"
+                           Foreground="White"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- CONTENU PRINCIPAL -->
+        <ScrollViewer Grid.Row="1">
+            <Border MaxWidth="800"
+                    Margin="40"
+                    Background="#121212"
+                    BorderBrush="#2A2A2A"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="30">
+
+                <StackPanel Spacing="6">
+                    
+                    <!-- BOUTONS DU HAUT (répétés en bas pour accessibilité) -->
+                    <Grid ColumnDefinitions="Auto,Auto"
+                          HorizontalAlignment="Center"
+                          ColumnSpacing="20"
+                          Margin="0,10,0,20">
+
+                        <!-- Annuler : retour immédiat sans modification -->
+                        <Button Grid.Column="0"
+                                Content="Annuler"
+                                Command="{Binding AnnulerCommand}" Width="160" Height="45"
+                                Background="#2A2A2A" Foreground="#D4AF37"
+                                FontWeight="SemiBold" CornerRadius="12"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/><!-- → AjouterVoitureViewModel.Annuler() → _retour() -->
+
+                        <!-- Ajouter : copie la voiture sélectionnée dans la collection privée MongoDB
+                            IsEnabled={Binding !IsLoading} → désactivé pendant l'opération MongoDB -->
+                        <Button Grid.Column="1"
+                                Command="{Binding AjouterCommand}" IsEnabled="{Binding !IsLoading}"
+                                Width="160" Height="45"
+                                Background="#D4AF37" Foreground="Black"
+                                FontWeight="Bold" CornerRadius="12"><!-- → AjouterVoitureViewModel.Ajouter() -->
+                            <TextBlock Text="Ajouter"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Button>
+
+                    </Grid>
+
+                    <!--LISTBOX
+                        ItemsSource = Catalogue (ObservableCollection<Voiture> chargée depuis MongoDB "MesVoitures")
+                        SelectedItem = VoitureSelectionnee → utilisé par AjouterCommand pour copier la voiture -->
+                    <ListBox ItemsSource="{Binding Catalogue}"
+                             SelectedItem="{Binding VoitureSelectionnee}" Background="Transparent"
+                             BorderThickness="0"
+                             Margin="0,2.5"><!-- Two-way : sélection → ViewModel -->
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate> <!-- DataContext ici = une Voiture du catalogue -->
+
+                                <Border Background="#1E1E1E"
+                                        CornerRadius="12" Padding="10" Margin="5"
+                                        BorderBrush="#2A2A2A" BorderThickness="1">
+
+                                    <StackPanel Orientation="Horizontal" Spacing="15">
+
+                                        <!-- Miniature de la voiture  -->
+                                        <Image Source="{Binding Image}"
+                                               Width="80" Height="60"
+                                               Stretch="UniformToFill"/>
+
+                                        <!-- Infos résumées -->
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Nom}"
+                                                       Foreground="White" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding Marque}"
+                                                       Foreground="#D4AF37"/>
+                                            <TextBlock Text="{Binding TypeCarburant}"
+                                                       Foreground="#777"/>
+                                        </StackPanel>
+
+                                    </StackPanel>
+
+                                </Border>
+
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- BOUTONS DU BAS (identiques à ceux du haut) -->
+                    <Grid ColumnDefinitions="Auto,Auto"
+                          HorizontalAlignment="Center"
+                          ColumnSpacing="20"
+                          Margin="0,10,0,20">
+
+                        <Button Grid.Column="0" Content="Annuler"
+                                Command="{Binding AnnulerCommand}"
+                                Width="160" Height="45"
+                                Background="#2A2A2A" Foreground="#D4AF37"
+                                FontWeight="SemiBold" CornerRadius="12"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+
+                        <Button Grid.Column="1"
+                                Command="{Binding AjouterCommand}"
+                                IsEnabled="{Binding !IsLoading}"
+                                Width="160" Height="45"
+                                Background="#D4AF37" Foreground="Black"
+                                FontWeight="Bold" CornerRadius="12">
+                            <TextBlock Text="Ajouter"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Button>
+
+                    </Grid>
+                    
+                    <!-- MESSAGE D'ERREUR
+                        Visible seulement si ErrorMessage n'est pas null/vide -->
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Foreground="#FF6B6B" FontSize="12"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
+                
+            </Border>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,95 @@
+<!-- COLLECTIONDETAILSVIEW.AXAML — Page de détails d'une voiture
+    DataContext = CollectionDetailsViewModel
+    
+    PAGE EN LECTURE SEULE — pas de modification possible ici
+    La voiture affichée est stockée dans MaVoiture (passée depuis CollectionViewModel) -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyProjectBase.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MyProjectBase.Views.CollectionDetailsView"
+             x:DataType="vm:CollectionDetailsViewModel">
+
+    <Design.DataContext>
+        <vm:CollectionDetailsViewModel/> <!-- Pour les previews XAML (constructeur vide requis) -->
+    </Design.DataContext>
+
+    <StackPanel VerticalAlignment="Top" Spacing="10">
+
+        <!--
+            BOUTON RETOUR
+            RetourAccueilCommand → CollectionDetailsViewModel.RetourAccueil()
+            → appelle le callback _retour → MainWindowViewModel.AllerCollection() -->
+        <Button Content="← Retour"
+                HorizontalAlignment="Left"
+                Margin="10"
+                Background="#1E1E1E"
+                Foreground="White"
+                Padding="10,5"
+                CornerRadius="8"
+                Command="{Binding RetourAccueilCommand}"/>
+
+        <!-- CARTE PRINCIPALE -->
+        <Border Background="#111111"
+                BorderBrush="#1F1F1F"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="15"
+                Margin="10,0">
+            <StackPanel Orientation="Horizontal"> <!-- Image à gauche, texte à droite -->
+
+                <!-- IMAGE DE LA VOITURE
+                    Source = MaVoiture.Image (Bitmap chargé dans CollectionViewModel.TryLoadImage)
+                    ClipToBounds = découpe l'image aux coins arrondis du Border -->
+                <Border Width="250" Height="160" CornerRadius="12" ClipToBounds="True" Margin="10">
+                    <Image Source="{Binding MaVoiture.Image}" Stretch="Uniform"/>
+                </Border>
+
+                <!-- INFOS  : toutes les propriétés de la voiture -->
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="20">
+
+                    <!-- StringFormat = formatage inline du binding
+                        Ex: StringFormat="Nom : {0}" avec Nom="BMW M4" → affiche "Nom : BMW M4"
+                    -->
+                    <TextBlock Text="{Binding MaVoiture.Nom, StringFormat=Nom : {0}}"
+                               FontSize="18" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding MaVoiture.Origine, StringFormat=Origine : {0}}"
+                               Margin="0,5,0,0"/>
+                    
+                    
+                    <StackPanel Margin="20" Spacing="10" MaxWidth="600">
+
+                        <!-- Description -->
+                        <TextBlock Text="Description:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding MaVoiture.Description}"
+                                   TextWrapping="Wrap" Foreground="#CCCCCC"/><!-- Retour à la ligne automatique -->
+
+                        <!-- moteur -->
+                        <TextBlock Text="Moteur:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding MaVoiture.Moteur}"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- Performances -->
+                        <TextBlock Text="Performance:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding MaVoiture.Performance}"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- Carburant -->
+                        <TextBlock Text="Consommation:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding MaVoiture.Consommation}"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- Confort -->
+                        <TextBlock Text="Confort:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding MaVoiture.Confort}"
+                                   TextWrapping="Wrap"/>
+
+                    </StackPanel>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,48 @@
+<!--
+    APP.AXAML — Configuration globale de l'application Avalonia
+    Code-behind : App.axaml.cs (classe App)
+    
+    RÔLE : déclare les ressources et styles qui s'appliquent à TOUTE l'application
+    
+    ÉLÉMENTS CLÉS :
+      1. DataTemplates → ViewLocator : mécanisme central de navigation MVVM
+      2. Styles → FluentTheme : thème visuel de base (Fluent Design System de Microsoft)
+      3. RequestedThemeVariant="Dark" : suit le thème système (clair/sombre selon l'OS)
+-->
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MyProjectBase.App" xmlns:local="using:MyProjectBase" RequestedThemeVariant="Dark">
+    <!-- Alias pour accéder aux classes du projet (ViewLocator) -->
+    <!-- Lie ce XAML à la classe App dans App.axaml.cs -->
+
+    <!--DataTemplates GLOBAUX — s'appliquent partout dans l'application
+        
+        ViewLocator est enregistré ici comme DataTemplate global
+        → Quand Avalonia cherche comment afficher un ViewModel (dans le ContentControl de MainWindow),
+          il consulte ces DataTemplates dans l'ordre
+        → ViewLocator.Match() vérifie si l'objet est un ViewModelBase
+        → ViewLocator.Build() convertit le nom ViewModel → View et instancie la View
+        
+        EXEMPLE CONCRET :
+          CurrentPage = new LoginViewModel(...)
+          → ContentControl reçoit un LoginViewModel
+          → Avalonia cherche un DataTemplate qui "match"
+          → ViewLocator.Match(LoginViewModel) retourne true
+          → ViewLocator.Build(LoginViewModel) retourne une LoginView instanciée
+          → LoginView s'affiche dans la fenêtre
+    -->
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+  
+    <!--
+        Styles GLOBAUX — thème visuel appliqué à tous les contrôles
+        FluentTheme = implémentation Avalonia du Fluent Design System (Microsoft)
+        Fournit les styles par défaut pour : Button, TextBox, ComboBox, ListBox, etc.
+        Les couleurs personnalisées (#D4AF37, #121212, etc.) dans les AXAML des Views
+        s'ajoutent PAR-DESSUS ce thème de base
+    -->
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>
