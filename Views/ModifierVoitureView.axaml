@@ -1,0 +1,156 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyProjectBase.ViewModels"
+             x:Class="MyProjectBase.Views.ModifierVoitureView"
+             x:DataType="vm:ModifierVoitureViewModel">
+
+    <Grid Background="#0D0D0D" RowDefinitions="Auto,*">
+
+        <Border Grid.Row="0" Background="#121212" Padding="15"
+                BorderBrush="#2A2A2A" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Content="← Retour" Command="{Binding AnnulerCommand}"
+                        Background="Transparent" Foreground="#D4AF37" FontSize="14"/>
+                <TextBlock Grid.Column="1" Text="Modifier la voiture"
+                           Foreground="White" FontSize="20" FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+            </Grid>
+        </Border>
+        
+        <ScrollViewer Grid.Row="1">
+            <Border MaxWidth="600" Margin="40" Background="#121212"
+                    BorderBrush="#2A2A2A" BorderThickness="1"
+                    CornerRadius="16" Padding="30">
+                
+                
+
+                <StackPanel Spacing="12">
+
+                    <!-- NOM  -->
+                    <TextBlock Text="Nom" Foreground="#777" FontSize="13"/>
+                    <TextBox Text="{Binding Nom}" 
+                             Background="#1E1E1E"
+                             Foreground="#888"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"/>
+
+                    <!-- MARQUE -->
+                    <TextBlock Text="Marque " Foreground="#777" FontSize="13"/>
+                    <ComboBox ItemsSource="{Binding Marques}"
+                              SelectedItem="{Binding Marque}"
+                              Background="#1E1E1E"
+                              Foreground="White"
+                              BorderBrush="#3A3A3A"
+                              CornerRadius="10"
+                              Padding="8,6"/>
+
+                    <!-- ORIGINE  -->
+                    <TextBlock Text="Origine " Foreground="#777" FontSize="13"/>
+                    <TextBox Text="{Binding Origine}"
+                             Background="#1E1E1E"
+                             Foreground="#888"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"/>
+
+                    <!-- CARBURANT -->
+                    <TextBlock Text="Carburant" Foreground="#BBBBBB" FontSize="13"/>
+                    <ComboBox ItemsSource="{Binding Carburants}"
+                              SelectedItem="{Binding TypeCarburant}"
+                              Background="#1E1E1E"
+                              Foreground="White"
+                              BorderBrush="#3A3A3A"
+                              CornerRadius="10"
+                              Padding="8,6"/>
+
+                    <!-- MOTEUR -->
+                    <TextBlock Text="Moteur" Foreground="#BBBBBB" FontSize="13"/>
+                    <TextBox Text="{Binding Moteur}"
+                             Background="#1E1E1E"
+                             Foreground="White"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"/>
+
+                    <!-- PERFORMANCE -->
+                    <TextBlock Text="Performance" Foreground="#BBBBBB" FontSize="13"/>
+                    <TextBox Text="{Binding Performance}"
+                             Background="#1E1E1E"
+                             Foreground="White"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"/>
+
+                    <!-- CONSOMMATION -->
+                    <TextBlock Text="Consommation" Foreground="#BBBBBB" FontSize="13"/>
+                    <TextBox Text="{Binding Consommation}"
+                             Background="#1E1E1E"
+                             Foreground="White"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"/>
+
+                    <!-- CONFORT -->
+                    <TextBlock Text="Confort" Foreground="#BBBBBB" FontSize="13"/>
+                    <TextBox Text="{Binding Confort}"
+                             Background="#1E1E1E"
+                             Foreground="White"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"/>
+
+                    <!-- DESCRIPTION -->
+                    <TextBlock Text="Description" Foreground="#BBBBBB" FontSize="13"/>
+                    <TextBox Text="{Binding Description}"
+                             Background="#1E1E1E"
+                             Foreground="White"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="10"
+                             Padding="12,8"
+                             Height="80"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"/>
+
+                    <!-- MESSAGE ERREUR -->
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Foreground="#FF6B6B"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               IsVisible="{Binding ErrorMessage,
+                                   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                    <!-- BOUTONS -->
+                    <Grid ColumnDefinitions="*,*" Margin="0,8,0,0">
+
+                        <Button Grid.Column="0"
+                                Content="Annuler"
+                                Command="{Binding AnnulerCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Background="#2A2A2A"
+                                Foreground="White"
+                                CornerRadius="12"
+                                Padding="0,12"
+                                Margin="0,0,6,0"/>
+
+                        <Button Grid.Column="1"
+                                Content="💾 Sauvegarder"
+                                Command="{Binding SauvegarderCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Background="#D4AF37"
+                                Foreground="Black"
+                                FontWeight="Bold"
+                                CornerRadius="12"
+                                Padding="0,12"
+                                Margin="6,0,0,0"/>
+
+                    </Grid>
+
+                </StackPanel>
+
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

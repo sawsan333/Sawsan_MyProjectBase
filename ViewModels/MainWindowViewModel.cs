@@ -76,7 +76,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _currentUser.Role,               // "admin" ou "user"
             goToAdmin: _currentUser.Role == "admin" ? AllerAdmin : null, // null = bouton Admin masqué
             goToAjout: AllerAjoutVoiture,
+            goToModifier: AllerModifierVoiture,
             logout: Logout
+            
         );
     }
 
@@ -101,7 +103,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // Dispose l'ancien ViewModel : ferme le port série, annule les tâches async
     // oldValue?.Dispose() = appel conditionnel (ne fait rien si oldValue est null)
-    partial void OnCurrentPageChanging(ViewModelBase? oldValue, ViewModelBase? newValue)
+    partial void OnCurrentPageChanging(ViewModelBase? oldValue, ViewModelBase newValue)
         => oldValue?.Dispose();
 
     // Navigue vers les détails d'une voiture
@@ -122,5 +124,17 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _currentUser = null; // Plus d'utilisateur connecté
         CurrentPage = new LoginViewModel(_mongoServices, OnLoginSuccess);
+    }
+    
+    // modification voiture
+    private void AllerModifierVoiture(Voiture voiture)
+    {
+        if (_currentUser == null) return;
+        CurrentPage = new ModifierVoitureViewModel(
+            voiture,
+            _mongoServices,
+            _currentUser.Username,
+            retour: AllerCollection
+        );
     }
 }

@@ -108,12 +108,26 @@
                             Background="#2A2A2A" Foreground="#D4AF37"
                             CornerRadius="15" Padding="12,6"
                             IsVisible="{Binding IsAdmin}"/>
+                    
+                    <!-- la barre de recherche -->
+                    <TextBox Text="{Binding Recherche}"
+                             Watermark="Rechercher..."
+                             Width="180"
+                             Background="#1E1E1E"
+                             Foreground="White"
+                             BorderBrush="#3A3A3A"
+                             CornerRadius="15"
+                             Padding="12,4"/>
 
                 </StackPanel>
 
                 <!-- filtres + déconnexion -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="15">
-
+                    <!--options de tri -->
+                    <ComboBox Width="160"
+                              ItemsSource="{Binding OptionsTri}"
+                              SelectedItem="{Binding TriSelectionne}"
+                              PlaceholderText="Trier par..."/>
                     <!--
                         Filtre par marque (ComboBox)
                         ItemsSource = liste Marques (List<string> dans le ViewModel)
@@ -131,25 +145,34 @@
                               PlaceholderText="Carburants"/>
 
                     <!-- Déconnexion : remet _currentUser = null + retourne au LoginView -->
-                    <Button Content="Déconnecter"
+                    <Button Content="→|"
                             Command="{Binding LogoutCommand}"
                             Background="#1E1E1E"
                             Foreground="#FF6B6B" BorderBrush="#FF6B6B"
                             BorderThickness="1"
                             CornerRadius="12"
-                            Padding="12,6"
-                            Margin="10,0,0,0"/><!-- Rouge pour signifier l'action de sortie -->
+                            Padding="12,6"/><!-- Rouge pour signifier l'action de sortie -->
 
                 </StackPanel>
 
             </Grid>
         </Border>
 
-        <!--TITRE -->
-        <TextBlock Grid.Row="1" Text="Ma collection de voitures"
-                   HorizontalAlignment="Center"
-                   Margin="0,15,0,10" Foreground="White" FontSize="24"/>
-
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,12,0,0">
+           <!--Compteur de voitures dans la collection-->
+            <TextBlock Text="{Binding NombreVoitures, StringFormat='{}{0} voiture(s)'}"
+                       HorizontalAlignment="Center"
+                       Foreground="#888888"
+                       FontSize="12"
+                       Margin="0,0,0,6"/>
+           
+           <!--TITRE-->
+            <TextBlock Text="Ma collection de voitures"
+                       HorizontalAlignment="Center"
+                       Foreground="White"
+                       FontSize="24"
+                       Margin="0,0,0,10"/>
+        </StackPanel>
         <!-- LISTE DES VOITURES
              ItemsSource = MesVoituresObservable (liste filtrée)
              Chaque item = une carte voiture avec image + infos + boutons -->
@@ -185,29 +208,48 @@
                                     <TextBlock Text="{Binding TypeCarburant}"
                                                Foreground="#777" Margin="0,5,0,0"/>
                                 </StackPanel>
+                                
+                                <!-- ACTIONS (voir + modifier + supprimer) -->
+                                <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Spacing="10"
+                                            VerticalAlignment="Center">
 
-                                <!-- BOUTON VOIR : navigue vers CollectionDetailsView
+                                    <!-- BOUTON VOIR : navigue vers CollectionDetailsView
                                     CommandParameter = Id de la voiture (string)
                                     DataContext.FromParentCommand : remonte au ViewModel parent
                                     (car ici DataContext = Voiture, pas CollectionViewModel)
                                     FromParentCommand = GoToDetailsFromChildCommand de MainWindowViewModel -->
-                                <Button Grid.Column="2" Content="Voir"
-                                        Background="#D4AF37" Foreground="Black"
-                                        Padding="12,6" CornerRadius="12"
-                                        VerticalAlignment="Center" Margin="0,0,8,0"
-                                        Command="{Binding DataContext.FromParentCommand, ElementName=Collection}"
-                                        CommandParameter="{Binding Id}"/> <!-- Passe l'Id MongoDB -->
+                                    <Button Content="Voir"
+                                            Background="#D4AF37"
+                                            Foreground="Black"
+                                            Padding="12,6"
+                                            CornerRadius="12"
+                                            Command="{Binding DataContext.FromParentCommand, ElementName=Collection}"
+                                            CommandParameter="{Binding Id}" />
 
-                                <!--
+                                    <!-- bouton modifier voiture-->
+                                    <Button Content="✏"
+                                            Background="#2A2A2A"
+                                            Foreground="#D4AF37"
+                                            Padding="12,6"
+                                            CornerRadius="12"
+                                            Command="{Binding DataContext.ModifierVoitureCommand, ElementName=Collection}"
+                                            CommandParameter="{Binding}" />
+
+                                    <!--
                                     BOUTON SUPPRIMER : supprime de MongoDB + de la liste locale
                                     CommandParameter={Binding} = passe l'objet Voiture entier
                                 -->
-                                <Button Grid.Column="3" Content="🗑"
-                                        Background="#C0392B" Foreground="White"
-                                        Padding="12,6" CornerRadius="12"
-                                        VerticalAlignment="Center"
-                                        Command="{Binding DataContext.SupprimerVoitureCommand, ElementName=Collection}"
-                                        CommandParameter="{Binding}"/> 
+                                    <Button Content="🗑"
+                                            Background="#C0392B"
+                                            Foreground="White"
+                                            Padding="12,6"
+                                            CornerRadius="12"
+                                            Command="{Binding DataContext.SupprimerVoitureCommand, ElementName=Collection}"
+                                            CommandParameter="{Binding}" />
+
+                                </StackPanel>
 
                             </Grid>
                         </Border>

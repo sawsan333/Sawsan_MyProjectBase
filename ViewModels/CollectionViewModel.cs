@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using MyProjectBase.Helpers;
+using Avalonia.Styling;
+using Avalonia;
 
 namespace MyProjectBase.ViewModels;
 
@@ -32,6 +34,7 @@ public partial class CollectionViewModel : ViewModelBase
     private readonly Action? _goToAdmin;            // Callback → AdminView (null si pas admin)
     private readonly Action? _goToAjout;            // Callback → AjouterVoitureView
     private readonly Action? _logout;               // Callback → déconnexion → LoginView
+    private readonly Action<Voiture>? _goToModifier;
 
     // Constructeur vide : UNIQUEMENT pour le designer Avalonia (preview XAML)
     public CollectionViewModel() { }
@@ -44,8 +47,11 @@ public partial class CollectionViewModel : ViewModelBase
         string userId,
         string role,
         Action? goToAdmin = null,
+        Action<Voiture>? goToModifier = null,
         Action? goToAjout = null,
         Action? logout = null)
+    
+    
     {
         FromParentCommand = fromParentCommand; // Stocke la commande "aller aux détails"
         _csvServices = new CsvServices(topLevel);
@@ -55,12 +61,20 @@ public partial class CollectionViewModel : ViewModelBase
         _goToAdmin = goToAdmin;
         _goToAjout = goToAjout;
         _logout = logout;
+        _goToModifier = goToModifier;
+        
         
         MesVoituresObservable = new ObservableCollection<Voiture>();
         _ = LoadFromMongoAsync(); // Charge la collection au démarrage
         // _ = discard : ignore le Task retourné (pas de await dans un constructeur)
     }
 
+    //modification de voiture
+    [RelayCommand]
+    private void ModifierVoiture(Voiture? v)
+    {
+        if (v != null) _goToModifier?.Invoke(v);
+    }
     // COMMANDES DE NAVIGATION 
     
     [RelayCommand]
@@ -94,16 +108,28 @@ public partial class CollectionViewModel : ViewModelBase
         "Tout",
         "Essence", "Diesel", "Électrique"
     };
+    
+    public List<string> OptionsTri { get; } = new()
+    {
+        "Par défaut", "Nom A→Z", "Nom Z→A", "Marque A→Z", "Marque Z→A"
+    };
+    
+    //pour la barre de recherche
+    [ObservableProperty] private string _recherche = "";
 
     // Valeur sélectionnée dans les ComboBox de filtre
     // Les méthodes partielles sont appelées automatiquement par [ObservableProperty] au changement
     [ObservableProperty] private string? _marqueSelectionnee;
     [ObservableProperty] private string? _carburantSelectionne;
+    [ObservableProperty] private string _triSelectionne = "Par défaut";
+    
 
     // Ces méthodes partielles sont générées et appelées quand la propriété change
     // Dès que l'utilisateur change un filtre dans la ComboBox → la liste se rafraîchit
     partial void OnMarqueSelectionneeChanged(string? value) => AppliquerFiltres();
     partial void OnCarburantSelectionneChanged(string? value) => AppliquerFiltres();
+    partial void OnRechercheChanged(string value) => AppliquerFiltres();
+    partial void OnTriSelectionneChanged(string value) => AppliquerFiltres();
 
     // Liste affichée dans la ListBox (sous-ensemble filtré de MyGlobals.MesVoitures)
     [ObservableProperty] private ObservableCollection<Voiture> _mesVoituresObservable = new();
@@ -126,6 +152,9 @@ public partial class CollectionViewModel : ViewModelBase
         new ColonneExport("Confort",      "Confort"),
         new ColonneExport("Image (path)", "PicturePath", selectionneeParDefaut: true),
     };
+    
+    // Propriété calculée : se recalcule automatiquement quand MesVoituresObservable change
+    public int NombreVoitures => MesVoituresObservable.Count;
 
     // COMMANDES CSV 
 
@@ -163,8 +192,11 @@ public partial class CollectionViewModel : ViewModelBase
                 TryLoadImage(v);
                 MyGlobals.MesVoitures.Add(v);
             }
+
             // Reset de l'ObservableCollection → déclenche le data binding → l'UI se met à jour
             MesVoituresObservable = new ObservableCollection<Voiture>(MyGlobals.MesVoitures);
+            
+            OnPropertyChanged(nameof(NombreVoitures));
         });
     }
 
@@ -204,9 +236,27 @@ public partial class CollectionViewModel : ViewModelBase
         // Filtre carburant (chaînable avec le filtre marque)
         if (!string.IsNullOrEmpty(_carburantSelectionne) && _carburantSelectionne != "Tout")
             res = res.Where(v => v.TypeCarburant == _carburantSelectionne);
+        
+        //barre de recherche
+        if (!string.IsNullOrWhiteSpace(_recherche))
+            res = res.Where(v =>
+                v.Nom.Contains(_recherche, StringComparison.OrdinalIgnoreCase) ||
+                v.Marque.Contains(_recherche, StringComparison.OrdinalIgnoreCase));
+        
+        //Options tri
+        res = TriSelectionne switch
+        {
+            "Nom A→Z"    => res.OrderBy(v => v.Nom),
+            "Nom Z→A"    => res.OrderByDescending(v => v.Nom),
+            "Marque A→Z" => res.OrderBy(v => v.Marque),
+            "Marque Z→A" => res.OrderByDescending(v => v.Marque),
+            _            => res
+        };
 
         // Remplace l'observable → le data binding met à jour la ListBox automatiquement
         MesVoituresObservable = new ObservableCollection<Voiture>(res);
+        
+        OnPropertyChanged(nameof(NombreVoitures)); // Notifie l'UI que le compteur a changé
     }
 
     // Tente de charger l'image d'une voiture depuis les ressources embarquées (Assets/)

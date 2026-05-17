@@ -34,7 +34,7 @@ public class Voiture
     public string Origine { get; set; } = "";       
     public string Marque { get; set; } = "";        
     public string TypeCarburant { get; set; } = ""; 
-    public string PicturePath { get; set; } = "";   
+    public string PicturePath { get; set; }    
 
     // Image chargée en mémoire (non stockée en DB)
     // [BsonIgnore] = MongoDB ne sérialise/désérialise pas ce champ
